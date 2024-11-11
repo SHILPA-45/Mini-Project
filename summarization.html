@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Innovative Paragraph Summarizer</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(to right, #6a11cb, #2575fc);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            color: white;
+            text-align: center;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
+        }
+
+        textarea {
+            width: 80%;
+            height: 150px;
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 10px;
+            border: none;
+            font-size: 16px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 10px;
+            background-color: #28a745;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.3s;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        button:hover {
+            background-color: #218838;
+            transform: scale(1.05);
+        }
+
+        .result {
+            margin-top: 20px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            width: 80%;
+            display: none;
+            justify-content: center;
+            text-align: justify;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .result p {
+            margin: 0;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+    <h1>Innovative Paragraph Summarizer</h1>
+    <textarea id="inputText" placeholder="Enter your paragraph here..."></textarea>
+    <button onclick="summarizeParagraph()">Summarize</button>
+    <div id="result" class="result">
+        <p id="summaryText"></p>
+    </div>
+
+    <script>
+        function summarizeParagraph() {
+            const text = document.getElementById('inputText').value;
+            const sentences = text.split('.').filter(sentence => sentence.trim() !== '');
+            const summaryLength = Math.ceil(sentences.length / 2); // Take half of the sentences for summary
+            const summary = sentences.slice(0, summaryLength).join('.') + (summaryLength > 0 ? '.' : '');
+            
+            const resultDisplay = document.getElementById('result');
+            const summaryText = document.getElementById('summaryText');
+            summaryText.textContent = summary;
+            resultDisplay.style.display = 'block';
+        }
+    </script>
+</body>
+</html>
