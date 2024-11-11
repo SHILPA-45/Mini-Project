@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Color Name Game</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(to right, #ff7e5f, #feb47b);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            color: #fff;
+        }
+
+        .game-container {
+            text-align: center;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            width: 300px;
+        }
+
+        h1 {
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+
+        .color-name {
+            font-size: 36px;
+            margin: 20px 0;
+        }
+
+        button {
+            border: none;
+            padding: 20px; /* Increased padding for a larger button */
+            border-radius: 5px;
+            cursor: pointer;
+            transition: transform 0.2s;
+            margin: 5px;
+            width: 100px; /* Set a width for uniformity */
+        }
+
+        button:hover {
+            transform: scale(1.05); /* Slightly enlarge button on hover */
+        }
+
+        .result {
+            margin-top: 20px;
+            font-size: 18px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1>Guess the Color!</h1>
+        <div id="colorName" class="color-name"></div>
+        <div id="options"></div>
+        <div id="result" class="result"></div>
+        <button id="restartButton" style="display: none;">Play Again</button>
+    </div>
+
+    <script>
+        const colors = ["red", "blue", "green", "yellow", "purple", "orange", "pink", "cyan", "lime", "teal"];
+        let correctColor;
+        const colorNameDisplay = document.getElementById('colorName');
+        const optionsContainer = document.getElementById('options');
+        const resultDisplay = document.getElementById('result');
+        const restartButton = document.getElementById('restartButton');
+
+        function startGame() {
+            correctColor = colors[Math.floor(Math.random() * colors.length)];
+            colorNameDisplay.textContent = correctColor.toUpperCase();
+            colorNameDisplay.style.color = getRandomColor();
+            generateOptions();
+            resultDisplay.style.display = 'none';
+            restartButton.style.display = 'none';
+        }
+
+        function generateOptions() {
+            optionsContainer.innerHTML = '';
+            const shuffledColors = [...colors].sort(() => 0.5 - Math.random());
+            shuffledColors.forEach(color => {
+                const button = document.createElement('button');
+                button.style.backgroundColor = color; // Set button background color
+                button.onclick = () => checkGuess(color); // Check guess when clicked
+                optionsContainer.appendChild(button); // Add button to options
+            });
+        }
+
+        function checkGuess(selectedColor) {
+            if (selectedColor.toLowerCase() === correctColor.toLowerCase()) {
+                resultDisplay.textContent = "Correct! 🎉";
+            } else {
+                resultDisplay.textContent = "Wrong! Try Again! ❌";
+            }
+            resultDisplay.style.display = 'block';
+            restartButton.style.display = 'block';
+        }
+
+        function getRandomColor() {
+            const randomIndex = Math.floor(Math.random() * colors.length);
+            return colors[randomIndex];
+        }
+
+        restartButton.addEventListener('click', startGame);
+        startGame();
+    </script>
+</body>
+</html>
