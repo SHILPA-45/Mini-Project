@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pattern Matching Puzzle</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(to right, #6a11cb, #2575fc);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            color: #fff;
+            text-align: center;
+        }
+
+        .puzzle-container {
+            display: grid;
+            grid-template-columns: repeat(4, 100px);
+            gap: 10px;
+        }
+
+        .box {
+            width: 100px;
+            height: 100px;
+            border-radius: 10px;
+            background-color: #ccc;
+            cursor: pointer;
+            opacity: 0.8;
+            transition: opacity 0.3s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 48px;
+            color: #fff;
+        }
+
+        .box.flipped {
+            opacity: 1;
+        }
+
+        .result {
+            margin-top: 20px;
+            font-size: 24px;
+        }
+
+        button {
+            margin-top: 20px;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            background-color: #28a745;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #218838;
+        }
+    </style>
+</head>
+<body>
+    <div>
+        <h1>Pattern Matching Puzzle</h1>
+        <div id="puzzle" class="puzzle-container"></div>
+        <div id="result" class="result"></div>
+        <button id="restartButton">Restart</button>
+    </div>
+
+    <script>
+        const icons = ['😊', '🎉', '🚀', '🌟', '🐶', '🐱', '🍎', '🍌'];
+        let iconPairs = [...icons, ...icons]; // Duplicate icons for pairs
+        let firstChoice = null;
+        let secondChoice = null;
+        let matchedPairs = 0;
+
+        const puzzleContainer = document.getElementById('puzzle');
+        const resultDisplay = document.getElementById('result');
+        const restartButton = document.getElementById('restartButton');
+
+        function createPuzzle() {
+            iconPairs.sort(() => Math.random() - 0.5); // Shuffle icons
+            puzzleContainer.innerHTML = '';
+
+            iconPairs.forEach(icon => {
+                const box = document.createElement('div');
+                box.classList.add('box');
+                box.innerHTML = ''; // Initially empty
+                box.dataset.icon = icon;
+                box.onclick = () => selectBox(box);
+                puzzleContainer.appendChild(box);
+            });
+
+            matchedPairs = 0;
+            resultDisplay.textContent = '';
+        }
+
+        function selectBox(box) {
+            if (box.classList.contains('flipped') || secondChoice) return; // Prevent clicking if already flipped or a second choice is made
+
+            box.classList.add('flipped');
+            box.innerHTML = box.dataset.icon; // Show the icon
+
+            if (!firstChoice) {
+                firstChoice = box;
+            } else {
+                secondChoice = box;
+                checkMatch();
+            }
+        }
+
+        function checkMatch() {
+            if (firstChoice.dataset.icon === secondChoice.dataset.icon) {
+                matchedPairs++;
+                resultDisplay.textContent = `Matched Pairs: ${matchedPairs}`;
+                resetChoices();
+                if (matchedPairs === icons.length) {
+                    resultDisplay.textContent = "You've matched all pairs! 🎉";
+                }
+            } else {
+                setTimeout(() => {
+                    firstChoice.innerHTML = ''; // Hide the icon
+                    secondChoice.innerHTML = ''; // Hide the icon
+                    firstChoice.classList.remove('flipped');
+                    secondChoice.classList.remove('flipped');
+                    resetChoices();
+                }, 1000);
+            }
+        }
+
+        function resetChoices() {
+            firstChoice = null;
+            secondChoice = null;
+        }
+
+        restartButton.onclick = createPuzzle;
+        createPuzzle();
+    </script>
+</body>
+</html>
