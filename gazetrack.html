@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eye Tracking with Math Quiz</title>
+    <script src="https://cdn.jsdelivr.net/npm/webgazer@latest"></script>
+    <style>
+        /* General Styling */
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #74ebd5, #9face6);
+            margin: 0;
+            padding: 0;
+            color: #333;
+        }
+
+        /* Container Styling */
+        #container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            height: 100vh;
+            flex-direction: column;
+        }
+
+        #contentBox {
+            max-width: 800px;
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            padding: 30px;
+            text-align: center;
+            transition: transform 0.3s;
+        }
+
+        #contentBox:hover {
+            transform: scale(1.03);
+        }
+
+        /* Control buttons */
+        .control-button {
+            padding: 12px 25px;
+            font-size: 16px;
+            margin: 10px;
+            cursor: pointer;
+            background: #007bff;
+            color: white;
+            border-radius: 6px;
+            border: none;
+            transition: background 0.3s;
+        }
+
+        .control-button:hover {
+            background: #0056b3;
+        }
+
+        /* Gaze dot styling */
+        #gazeDot {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            background: red;
+            border-radius: 50%;
+            display: none;
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        /* Reading paragraph */
+        #passage {
+            margin-top: 20px;
+            font-size: 18px;
+            line-height: 1.8;
+            border: 2px dashed #007bff;
+            border-radius: 10px;
+            padding: 20px;
+            background-color: #f9f9f9;
+            text-align: left;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Distraction message */
+        #message {
+            color: red;
+            font-size: 20px;
+            margin-top: 20px;
+            font-weight: bold;
+            display: none;
+        }
+
+        /* Math Quiz Box Styling */
+        #quizBox {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #f8f9fa;
+            border: 2px solid #007bff;
+            border-radius: 10px;
+            padding: 25px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            width: 350px;
+            text-align: center;
+        }
+
+        #quizBox h2 {
+            margin-bottom: 15px;
+            color: #007bff;
+        }
+
+        #quizQuestion {
+            font-size: 18px;
+            margin-bottom: 20px;
+        }
+
+        .quiz-option {
+            display: block;
+            margin: 10px 0;
+            padding: 12px 20px;
+            background: #e9ecef;
+            border: 1px solid #ced4da;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background 0.3s, color 0.3s;
+        }
+
+        .quiz-option:hover {
+            background: #007bff;
+            color: white;
+            border-color: #007bff;
+        }
+
+        #quizClose {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        #quizClose:hover {
+            background: #c82333;
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <div id="contentBox">
+            <h1>WebGazer.js Eye Tracking Demo</h1>
+            <button class="control-button" onclick="startTracking()">Start Eye Tracking</button>
+            <button class="control-button" onclick="stopTracking()">Stop Eye Tracking</button>
+            <p><em>Please calibrate by looking at each corner of the screen for a few seconds after starting tracking.</em></p>
+            <div id="passage">
+                <p>
+                    Eye tracking technology has revolutionized the way we study human behavior. By tracking eye movements, researchers can better understand how people read, perceive visual stimuli, and interact with their environment. This information is valuable in fields ranging from psychology and neuroscience to marketing and interface design. The gaze patterns we observe while reading, for example, can reveal insights into comprehension, interest, and cognitive load.
+                </p>
+                <p>
+                    Recent advancements in eye-tracking technology have made it more accessible, allowing it to be used with standard webcams in addition to specialized hardware. Web-based solutions, such as WebGazer.js, offer researchers, educators, and developers a powerful tool for creating interactive and adaptive content based on real-time user engagement.
+                </p>
+            </div>
+            <!-- Distraction Message -->
+            <p id="message">Distraction detected! Please refocus on the paragraph.</p>
+        </div>
+    </div>
+    <div id="gazeDot"></div>
+
+    <!-- Math Quiz Popup -->
+    <div id="quizBox">
+        <h2>Math Quiz</h2>
+        <div id="quizQuestion"></div>
+        <div id="quizOptions"></div>
+        <button id="quizClose" onclick="endQuiz()">Close</button>
+    </div>
+
+    <script>
+        // Distraction-related variables
+        let isDistracted = false;
+        let distractionStartTime = null;
+        const distractionThreshold = 3000; // 3 seconds
+        let distractionCount = 0;
+        const distractionLimit = 5;
+
+        // Math quiz variables
+        let quizQuestions = [];
+        let currentQuestionIndex = 0;
+        let quizScore = 0;
+
+        function startTracking() {
+            // Define the target area as the paragraph
+            const targetArea = document.getElementById("passage").getBoundingClientRect();
+
+            webgazer.setGazeListener((data) => {
+                if (data) {
+                    const gazeDot = document.getElementById("gazeDot");
+                    gazeDot.style.left = data.x + "px";
+                    gazeDot.style.top = data.y + "px";
+                    gazeDot.style.display = "block";
+
+                    // Check if gaze is outside the target area (paragraph)
+                    const isOutsideTarget =
+                        data.x < targetArea.left ||
+                        data.x > targetArea.right ||
+                        data.y < targetArea.top ||
+                        data.y > targetArea.bottom;
+
+                    if (isOutsideTarget) {
+                        if (!distractionStartTime) {
+                            distractionStartTime = Date.now();
+                        } else if (Date.now() - distractionStartTime >= distractionThreshold && !isDistracted) {
+                            isDistracted = true;
+                            distractionCount++;
+                            showDistractionMessage();
+
+                            if (distractionCount >= distractionLimit) {
+                                askIfDistracted();
+                                distractionCount = 0;
+                            }
+                        }
+                    } else {
+                        resetDistractionState();
+                    }
+                }
+            }).showPredictionPoints(false).begin();
+
+            webgazer.showVideo(true);
+            webgazer.showFaceOverlay(true);
+            webgazer.showFaceFeedbackBox(true);
+            calibrateGaze();
+        }
+
+        function stopTracking() {
+            webgazer.end();
+            document.getElementById("gazeDot").style.display = "none";
+            webgazer.showVideo(false);
+            webgazer.showFaceOverlay(false);
+            webgazer.showFaceFeedbackBox(false);
+            resetDistractionState();
+        }
+
+        function calibrateGaze() {
+            alert("Calibration: Please look at each corner of the screen for a few seconds.");
+        }
+
+        function showDistractionMessage() {
+            document.getElementById("message").style.display = "block";
+            console.log(`Distraction ${distractionCount}: Gaze outside the target area (paragraph).`);
+        }
+
+        function askIfDistracted() {
+            const userResponse = confirm("You've been distracted multiple times. Would you like to play a math quiz?");
+            if (userResponse) {
+                startQuiz();
+            } else {
+                alert("Try to refocus or take a break.");
+            }
+        }
+
+        function resetDistractionState() {
+            isDistracted = false;
+            distractionStartTime = null;
+            document.getElementById("message").style.display = "none";
+        }
+
+        // Math Quiz Functions
+        function startQuiz() {
+            quizQuestions = generateQuizQuestions();
+            currentQuestionIndex = 0;
+            quizScore = 0;
+            displayQuestion();
+            document.getElementById("quizBox").style.display = "block";
+        }
+
+        function generateQuizQuestions() {
+            const questions = [];
+            for (let i = 0; i < 5; i++) {
+                const num1 = Math.floor(Math.random() * 10) + 1;
+                const num2 = Math.floor(Math.random() * 10) + 1;
+                const operator = Math.random() > 0.5 ? "+" : "-";
+                const question = `${num1} ${operator} ${num2}`;
+                const answer = operator === "+" ? num1 + num2 : num1 - num2;
+
+                const options = [
+                    answer,
+                    answer + Math.floor(Math.random() * 3) + 1,
+                    answer - Math.floor(Math.random() * 3) - 1,
+                    answer + Math.floor(Math.random() * 2) + 2
+                ].sort(() => Math.random() - 0.5);
+
+                questions.push({ question, answer, options });
+            }
+            return questions;
+        }
+
+        function displayQuestion() {
+            const question = quizQuestions[currentQuestionIndex];
+            document.getElementById("quizQuestion").textContent = question.question;
+            const optionsContainer = document.getElementById("quizOptions");
+            optionsContainer.innerHTML = "";
+            question.options.forEach((option) => {
+                const optionButton = document.createElement("div");
+                optionButton.classList.add("quiz-option");
+                optionButton.textContent = option;
+                optionButton.onclick = () => checkAnswer(option);
+                optionsContainer.appendChild(optionButton);
+            });
+        }
+
+        function checkAnswer(selectedAnswer) {
+            const question = quizQuestions[currentQuestionIndex];
+            if (selectedAnswer == question.answer) {
+                quizScore++;
+            }
+            currentQuestionIndex++;
+            if (currentQuestionIndex < quizQuestions.length) {
+                displayQuestion();
+            } else {
+                endQuiz();
+            }
+        }
+
+        function endQuiz() {
+            alert(`Quiz Over! Your score is ${quizScore} / 5`);
+            document.getElementById("quizBox").style.display = "none";
+        }
+    </script>
+</body>
+</html>
